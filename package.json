@@ -1,0 +1,19 @@
+{
+  "name": "video-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Short narrated explainer videos, drawn in the browser frame by frame and rendered to MP4",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "doctor": "node tools/doctor.mjs",
+    "gallery": "node tools/gallery.mjs"
+  },
+  "dependencies": {
+    "@fontsource/source-code-pro": "5.1.1",
+    "@fontsource/source-sans-3": "5.1.1",
+    "@fontsource/stix-two-text": "5.1.1",
+    "d3": "7.9.0",
+    "three": "0.169.0"
+  }
+}

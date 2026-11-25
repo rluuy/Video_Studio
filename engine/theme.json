@@ -1,0 +1,46 @@
+{
+  "_about": "Every shared color, font and type size of the studio. Change them here only. The method colors and the two maps were copied on 2026-11-24 from the paper's palette (RUDO_CCOS_Journal/figures/publication/palette.json).",
+  "frame": { "width": 1920, "height": 1080, "margin": 96, "background": "#0b0f14" },
+  "ink": {
+    "title": "#eef1f5",
+    "text": "#c3cad3",
+    "sub": "#a9b3be",
+    "dim": "#8a94a0",
+    "key": "#7f8a96",
+    "faint": "#5d6772",
+    "rule": "#3a434d"
+  },
+  "panel": { "fill": "#10161d", "deep": "#0e141b", "line": "#2f3944", "floor": "#151b23" },
+  "accent": {
+    "_use": "identities in diagrams. Red and blue-grey are kept for the signed map",
+    "blue": "#0072B2",
+    "blueText": "#4aa3e0",
+    "amber": "#E69F00",
+    "pink": "#CC79A7",
+    "mark": "#ff9f43"
+  },
+  "light": { "ray": "#fff1d6", "rayCore": "#ffedcc", "contact": "#fff4dc", "glow": "#b9a6ff" },
+  "object": {
+    "glass": "#9fb0c0",
+    "glassDark": "#56636f",
+    "glassBlock": "#7d8b98",
+    "glassEdge": "#a9b6c2",
+    "mirror": "#dfe4ea",
+    "neutral": "#c7cdd4",
+    "dish": "#c9d0d8",
+    "wall": "#4a525b",
+    "dishWall": "#3e4650"
+  },
+  "ccos": {
+    "ionBeam": "#b9a6ff",
+    "toolBeam": { "full": "#dfe4ea", "mm3": "#aeb8c3", "mm1": "#8592a0" },
+    "steel": "#a3acb6",
+    "dark": "#59616b",
+    "pitch": "#6b5240",
+    "pitchFlat": "#5b4636",
+    "water": "#7fb4d8"
+  },
+  "maps": { "signed": "RdBu_r", "positive": "viridis" },
+  "font": { "sans": "'Source Sans 3'", "mono": "'Source Code Pro'", "math": "'STIX Two Text'" },
+  "type": { "title": 46, "sub": 29, "label": 23, "labelSmall": 21, "hud": 23, "bar": 22, "tick": 19, "smallest": 17 }
+}

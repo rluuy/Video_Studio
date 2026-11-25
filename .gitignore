@@ -1,0 +1,27 @@
+# installed packages and caches
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+
+# anything rendered (videos, drafts, full-size stills, comparison images)
+out/
+videos/*/out/
+
+# sources are other people's work, so only the notes about them are kept
+videos/*/sources/*
+!videos/*/sources/README.md
+
+# settings that belong to one machine, and anything secret
+.claude/settings.local.json
+.env
+.env.*
+*.key
+*.pem
+
+# editor and system files
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*

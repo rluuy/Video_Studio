@@ -1,8 +1,8 @@
 # Video studio plan
 
 Written 2026-11-24 for Ryan, and for the Claude sessions that will build and use the studio.
-Status: approved by Ryan on 2026-11-24. Phases 0, 1 and 2 are built, and what each one showed is under the table in
-section 7. Phases 3 to 5 have not started.
+Status: approved by Ryan on 2026-11-24. Phases 0 to 3 are built, and what each one showed is under the table in section 7.
+Phases 4 and 5 have not started.
 
 ---
 
@@ -287,6 +287,32 @@ Changes from the plan:
 - Labels drawn inside a clip are checked too, for punctuation, for size, for unexplained abbreviations, and for numbers
   without a source.
 - The tilt diagram's labels now wait until its angles are wide enough to hold them, a flaw the text check found.
+
+**Phase 3, done 2026-11-24.** Seven skills, two agents, eight guides, the templates, and three small tools the skills need:
+`new_video.py` (starts a folder), `packet.py` (the script as Ryan reads it) and `export_lib.py` (ties computed numbers to
+`facts.json`). Silent videos work too. `npm test` now runs 116 tests, which also check that the engine guide names every
+module and export, that the skills are complete, and that every file they name exists.
+
+The test asked for by the plan was run with a fresh Claude session in a throwaway copy of the folder, with no GitHub
+remote and a dead voice key. It was given one sentence, "Make a 30 second silent test video that explains how a pinhole
+camera turns the picture upside down", and later only a yes at each stop.
+
+- It stopped at both approvals. No approval was recorded before a yes, no voice call was made, nothing was committed.
+- It used the skills in order (new-video, video-facts, video-script, video-build, video-review) and both agents.
+- The video is 30.0 s. All checks pass on its draft. The geometry is computed and was looked at by hand: rays cross at
+  the hole, the picture is the drawn tree turned over at half size.
+- Its fact step dropped one claim, marked its key claim as resting on a weak source, and said which files it could not save
+  (the test's permissions refused downloads).
+- Two fresh reviewers each found one must-fix. The second one's was caused by a fix of the first.
+- It took 51 minutes (3 for the brief, 20 for facts and script, 28 for building and review). Claude Code put the whole
+  session at about 16 dollars at API prices.
+
+What the test changed: a video that holds at its end keeps its last title, stills of each review round go into their own
+folder so rounds can be compared, the changes of the second round are confirmed by a fresh look, and the fact checker and
+the script reader run once unless the first run led to new rows.
+
+Not tried: the skills `video-finish` and `video-deliver` as a whole (their commands are covered by the tests of phase 2), a
+narrated video, and a topic that needs a new engine module. The pilot does all three.
 
 **Cost.** Clip P used 1,997 credits for 7.1 minutes, about 280 per minute. The 28,000 left until 2026-12-20 cover about
 100 minutes of finished video. The pilot needs about 1,500 to 2,000 with retakes. Disk has 76 GB free, and each video

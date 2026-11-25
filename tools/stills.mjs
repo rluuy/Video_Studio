@@ -1,15 +1,17 @@
 // Draw single moments of a scene for review:
 //   node tools/stills.mjs videos/2026-12_interferometry 2.5 7 12.4
 //   node tools/stills.mjs gallery/slab 1.5
+//   node tools/stills.mjs videos/2026-12_interferometry --dir round1 2.5 7 12.4     into out/round1, to compare rounds later
 // Writes <name>_t<time>.png at 3840 x 2160 and a 1920 x 1080 copy (_1080.png) to the scene's out folder.
 import fs from 'fs';
 import path from 'path';
 import { execFileSync } from 'child_process';
 import { FFMPEG, launchChrome, outDir, sceneArg, sceneUrl, startServer } from './harness.mjs';
 
-const [typed, ...times] = process.argv.slice(2), scene = sceneArg(typed);
-if (!scene || !times.length) { console.error('usage: node tools/stills.mjs gallery/<name>|videos/<folder> <time> [<time> ...]'); process.exit(2); }
-const dir = outDir(scene, 'stills'), id = scene.split('/')[1];
+const args = process.argv.slice(2), at = args.indexOf('--dir'), sub = at >= 0 ? args.splice(at, 2)[1] : 'stills';
+const [typed, ...times] = args, scene = sceneArg(typed);
+if (!scene || !times.length) { console.error('usage: node tools/stills.mjs gallery/<name>|videos/<folder> [--dir name] <time> [<time> ...]'); process.exit(2); }
+const dir = outDir(scene, sub), id = scene.split('/')[1];
 const { srv, port } = await startServer();
 const c = await launchChrome();
 let failed = false;

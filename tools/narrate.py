@@ -63,6 +63,7 @@ def say(text, vid, model, path):
 
 
 def cmd_cost(vd, script):
+    if script.get('silent'): print('this video is silent, it costs no credits'); return
     need = todo(vd, script); chars = sum(len(S.spoken(t, script)) for _, t, _ in need)
     total = sum(1 for _ in S.lines_of(script))
     print(f'{total} lines, {total - len(need)} already have a voice, {len(need)} to make')
@@ -71,6 +72,7 @@ def cmd_cost(vd, script):
 
 
 def cmd_gen(vd, script):
+    if script.get('silent'): S.fail('this video is silent')
     st = approve.state(vd)
     if st['narration'] == 'no': S.fail('the script is not approved. Show Ryan the script, its facts and the cost first, then run approve.py')
     if st['narration'] == 'changed': S.fail('these lines changed after the script was approved: ' + ', '.join(approve.changed_lines(vd)) + '. Ask Ryan, then run approve.py again')
@@ -100,6 +102,7 @@ def track(vd, tl):
 
 def cmd_mix(vd, script, src):
     tl = S.read_json(vd / 'timeline.json')
+    if script.get('silent'): S.fail('this video is silent, there is nothing to mix')
     if tl['estimated']: S.fail('timeline.json is only an estimate. Run timeline.py fit first')
     import timeline
     if tl['timing'] != timeline.timing_digest(script): S.fail('script.json changed after timeline.json was made. Run timeline.py fit again, and render again')

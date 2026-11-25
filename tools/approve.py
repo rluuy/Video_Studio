@@ -51,7 +51,7 @@ def main():
         lines = {n: S.plain(ln['text']) for _, ln, n in S.lines_of(script)}
         chars = sum(len(S.spoken(ln['text'], script)) for _, ln, _ in S.lines_of(script))
         ap['script'] = {'date': today, 'narration': S.narration_digest(script), 'screen': S.screen_digest(script), 'facts': S.facts_digest(vd), 'voice': script['voice'], 'model': script['model'],
-                        'words': sum(len(t.split()) for t in lines.values()), 'characters': chars, 'credits_estimated': round(chars * S.CREDITS_PER_CHAR), 'lines': lines}
+                        'words': sum(len(t.split()) for t in lines.values()), 'characters': chars, 'credits_estimated': 0 if script.get('silent') else round(chars * S.CREDITS_PER_CHAR), 'lines': lines}
         S.write_json(f, ap)
     elif what is not None: sys.exit(__doc__)
     st = state(vd)

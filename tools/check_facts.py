@@ -7,7 +7,8 @@ facts.json holds one row per fact:
     "kind": "source",     "source": "citation", "where": "page, table or equation", "quote": "the words it rests on", "checked": "2026-12-02" }
     "kind": "computed",   "how": "export.py, which function and which assert" }
     "kind": "schematic",  "how": "why it is only drawn" }
-A source row counts only when it was reread ("checked") and quotes its source.
+A source row counts only when it was reread ("checked") and quotes its source. A computed row whose "how" begins with
+export.py counts only when export.py asserted it (export_lib.py writes that to data/meta.json).
 
 In script.json a line that says a number names the facts it rests on: "facts": ["F1"]. A number word that is ordinary
 language goes into "plain": ["two"]. Captions print a fact with {F1}.
@@ -29,7 +30,7 @@ def check(vd):
     script = S.load_script(vd)
     if not (vd / 'facts.json').exists(): return ['facts.json is missing'], []
     rows = S.read_json(vd / 'facts.json').get('facts', [])
-    facts = {}
+    facts = {}; made = S.read_json(vd / 'data' / 'meta.json', {}).get('facts', {}) if (vd / 'data' / 'meta.json').exists() else {}
     for f in rows:
         fid = f.get('id', '?')
         if fid in facts: err.append(f'row: two facts are called {fid}')
@@ -38,6 +39,9 @@ def check(vd):
         for k in ('claim', 'shown') + NEED[f['kind']]:
             if not f.get(k): err.append(f'row: {fid} has no "{k}"')
         if f['kind'] == 'source' and f.get('quote') and len(str(f['quote']).split()) < 3 and not re.search(r'\d', str(f['quote'])): err.append(f'row: the quote of {fid} is too short to check anything')
+        if f['kind'] == 'computed' and str(f.get('how', '')).startswith('export.py'):
+            if fid not in made: err.append(f'row: {fid} says export.py computes it, and data/meta.json has no such number. Run export.py')
+            elif isinstance(f.get('value'), (int, float)) and abs(made[fid] - f['value']) > 0.02 * max(abs(f['value']), 1e-12): err.append(f"row: {fid} is {f['value']} here and {made[fid]:g} in data/meta.json")
         # what is printed has to agree with the value
         v = f.get('value')
         if isinstance(v, (int, float)) and not isinstance(v, bool):

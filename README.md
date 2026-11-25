@@ -3,8 +3,14 @@
 Short narrated explainer videos on any topic, drawn in the browser frame by frame and rendered to MP4. Claude Code is
 opened in this folder and each video is a subfolder of `videos/`.
 
-**State on 2026-11-24.** The engine, its gallery and the tools work. Not built yet: the seven skills, the guides, and the
-first video. `docs/studio_plan.md` has the plan and its phases.
+**State on 2026-11-24.** The engine, the tools, the skills and the guides are built. The first video is not.
+`docs/studio_plan.md` has the plan and its phases.
+
+## Make a video
+
+Open Claude Code in this folder and name a topic, for example "make a video about interferometry", or type
+`/new-video interferometry`. Claude writes a brief and stops. After a yes it researches the facts, writes the script and
+stops again. After the second yes it makes the voice, draws, reviews and renders. `CLAUDE.md` has the seven steps.
 
 ## Set up a machine
 
@@ -41,7 +47,9 @@ npm run gallery                            # draws every gallery scene and compa
 | `gallery/` | One small scene per module, and its saved still in `gallery/stills/` |
 | `tools/` | Timing, narration, checks, rendering, delivery (below) |
 | `tests/` | A small test video and the tests of every tool |
-| `docs/` | The plan, and later the rules and guides |
+| `docs/` | The plan, the rules and the guides |
+| `templates/video/` | What a new video starts from |
+| `.claude/` | The seven skills and two reviewing agents |
 | `videos/` | One folder per video |
 
 ## From a script to a video
@@ -69,7 +77,7 @@ On the lab computer: pull, `npm ci`, `npm run doctor`, `node tools/render.mjs vi
 `python tools/check_render.py videos/x file.mp4` says whether the video was made from the reviewed files. Without GitHub
 access, `python tools/make_kit.py videos/x` packs a zip that does the same.
 
-`npm test` tests all of this in about four minutes and spends no credits.
+`npm test` tests all of this in about five minutes and spends no credits.
 
 ## Changing the engine
 

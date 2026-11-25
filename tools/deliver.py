@@ -1,6 +1,6 @@
 """What goes with a finished video.
 
-  python tools/deliver.py videos/x               from out/x_narrated.mp4
+  python tools/deliver.py videos/x               from out/x_narrated.mp4 (a silent video from out/x.mp4)
   python tools/deliver.py videos/x --to FOLDER   also copy the video, poster, cue sheet and notes there
 
 Writes to out/deliver/:
@@ -36,8 +36,9 @@ def main():
     vd = S.video_dir(a[0]); tl = S.read_json(vd / 'timeline.json'); script = S.load_script(vd)
     import timeline
     if tl['timing'] != timeline.timing_digest(script): S.fail('timeline.json is older than script.json')
-    src = vd / 'out' / f'{vd.name}_narrated.mp4'
-    if not src.exists(): S.fail(f'no {src}. Render, then narrate.py mix')
+    silent = bool(script.get('silent')); sound = [] if silent else ['-map', '0:a:0']
+    src = vd / 'out' / (f'{vd.name}.mp4' if silent else f'{vd.name}_narrated.mp4')
+    if not src.exists(): S.fail(f'no {src}. Render' + ('' if silent else ', then narrate.py mix'))
     info = S.probe(src); v, fps = S.video_stream(info)
     if abs(float(v['duration']) - tl['duration']) > 0.1: S.fail(f"{src.name} is {float(v['duration']):.2f} s, the timeline {tl['duration']:.2f} s")
     out = vd / 'out' / 'deliver'
@@ -48,7 +49,7 @@ def main():
     meta = out / 'chapters.txt'
     meta.write_text(';FFMETADATA1\n' + ''.join(f'[CHAPTER]\nTIMEBASE=1/1000\nSTART={round(x * 1000)}\nEND={round(y * 1000)}\ntitle={t}\n' for x, y, t in ch), encoding='utf-8', newline='\n')
     full = out / f'{vd.name}.mp4'
-    run('-i', str(src), '-i', str(meta), '-map', '0:v:0', '-map', '0:a:0', '-map_metadata', '0', '-map_chapters', '1', '-c', 'copy', '-movflags', '+faststart', str(full)); meta.unlink()
+    run('-i', str(src), '-i', str(meta), '-map', '0:v:0', *sound, '-map_metadata', '0', '-map_chapters', '1', '-c', 'copy', '-movflags', '+faststart', str(full)); meta.unlink()
     # ---- one file per chapter. It is copied from keyframe to keyframe by counting frames, so it is exact and nothing is encoded again
     files = []
     if len(ch) > 1:
@@ -62,7 +63,7 @@ def main():
         for i, (x, y, t) in enumerate(ch, 1):
             a0, n = first[i - 1], (first[i] if i < len(ch) else total) - first[i - 1]
             f = out / f'{vd.name}_{i}_{slug(t)}.mp4'
-            run('-ss', f'{max(0, (a0 - 0.2) / fps):.4f}', '-i', str(src), '-frames:v', str(n), '-t', f'{n / fps + 0.004:.4f}', '-map', '0:v:0', '-map', '0:a:0', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', '-metadata', f'title={t}', str(f))
+            run('-ss', f'{max(0, (a0 - 0.2) / fps):.4f}', '-i', str(src), '-frames:v', str(n), '-t', f'{n / fps + 0.004:.4f}', '-map', '0:v:0', *sound, '-c:v', 'copy', *([] if silent else ['-c:a', 'aac', '-b:a', '160k']), '-movflags', '+faststart', '-metadata', f'title={t}', str(f))
             got = int(S.video_stream(S.probe(f))[0]['nb_frames'])
             if got != n: S.fail(f'chapter {i} came out with {got} frames instead of {n}')
             files.append(f)
@@ -79,6 +80,7 @@ def main():
     # ---- notes
     rows = S.read_json(vd / 'facts.json', {'facts': []}).get('facts', [])
     n = [f"{tl['title']}. {S.clock(tl['duration'])}, narrated" + (f" by the {script['voice'].title()} voice from elevenlabs.io." if not tl['estimated'] else '.')]
+    if silent: n = [f"{tl['title']}. {S.clock(tl['duration'])}, silent."]
     if len(ch) > 1: n.append('Chapters: ' + ', '.join(f'{t} ({S.clock(x)})' for x, _, t in ch) + '.')
     for kind, head in (('source', 'From sources'), ('computed', 'Computed for this video'), ('schematic', 'Drawn, not measured')):
         got = [f for f in rows if f.get('kind') == kind]

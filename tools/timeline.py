@@ -1,7 +1,8 @@
 """Place every narration line and every caption in time, from script.json and the real speech.
 
   python tools/timeline.py plan videos/x     from word counts, before there is a voice
-  python tools/timeline.py fit videos/x      from the voice files, after narrate.py gen
+  python tools/timeline.py fit videos/x      from the voice files, after narrate.py gen. A silent video ("silent": true in
+                                             script.json) is paced by its word counts, and plan and fit do the same
   python tools/timeline.py show videos/x     print what timeline.json holds
 
 Writes videos/x/timeline.json. The clip asks it when a line starts (engine/core/timeline.js), so nothing in the clip
@@ -76,21 +77,22 @@ def build(vd, script, estimated):
         for ln in here:
             ln['start'] = round(ln['start'] + t, 3); ln['end'] = round(ln['end'] + t, 3); lines.append(ln)
         # captions: explicit times, or from one to the next of the same kind
-        caps = sc.get('captions', [])
+        caps = sc.get('captions', []); holds = si == last and script.get('ending') == 'hold'
         for ci, c in enumerate(caps):
             where = f"scene {sc['id']}, caption {ci + 1}"
             t0 = resolve(c['from'], scene, where) if 'from' in c else 0.3
             nxt = next((d for d in caps[ci + 1:] if d.get('kind', 'title') == c.get('kind', 'title')), None)
             if 'to' in c: t1 = resolve(c['to'], scene, where)
             elif nxt is not None and 'from' in nxt: t1 = resolve(nxt['from'], scene, where) - 0.4
-            else: t1 = length - 0.3
+            else: t1 = length + 1.0 if holds else length - 0.3          # the last picture of a video that holds keeps its words
             if t1 - t0 < 0.5: S.fail(f'{where} would show for {t1 - t0:.2f} s')
-            if t0 < -0.001 or t1 > length + 0.001: S.fail(f'{where} runs from {t0:.2f} to {t1:.2f} s, outside its scene of {length:.2f} s')
+            if t0 < -0.001 or t1 > length + (1.001 if holds and 'to' not in c else 0.001): S.fail(f'{where} runs from {t0:.2f} to {t1:.2f} s, outside its scene of {length:.2f} s')
             words = len(re.sub(r'<[^>]+>|\{[^}]+\}', ' x ', c['text']).split())
             if t1 - t0 < 0.8 + words / 4: notes.append(f'{where} shows for {t1 - t0:.1f} s, short for {words} words')
             scene['captions'].append({'kind': c.get('kind', 'title'), 'text': c['text'], 't0': round(t0, 3), 't1': round(t1, 3)})
         scenes.append(scene); t = round(t + length, 3)
-    tl = {'title': script.get('title', ''), 'estimated': estimated, 'voice': None if estimated else script['voice'], 'model': None if estimated else script['model'],
+    silent = bool(script.get('silent'))
+    tl = {'title': script.get('title', ''), 'silent': silent, 'estimated': estimated and not silent, 'voice': None if estimated else script['voice'], 'model': None if estimated else script['model'],
           'narration': S.narration_digest(script), 'timing': timing_digest(script), 'ending': script.get('ending', 'fade'),
           'duration': t, 'scenes': scenes, 'lines': lines}
     if script.get('poster'):
@@ -105,7 +107,7 @@ def timing_digest(script):
     """everything in the script that moves something in time"""
     keep = [[sc['id'], sc.get('min'), sc.get('tail'), sc.get('chapter'), sc.get('cut'), [[l['id'], l['text'], l.get('at'), l.get('gap'), l.get('wait'), l.get('hold')] for l in sc.get('lines', [])],
              [[c.get('kind'), c['text'], c.get('from'), c.get('to')] for c in sc.get('captions', [])]] for sc in script['scenes']]
-    return S.digest([keep, [script[k] for k in S.DEFAULTS], script.get('poster'), script.get('ending'), script['voice'], script['model'], script.get('say')])
+    return S.digest([keep, [script[k] for k in S.DEFAULTS], script.get('poster'), script.get('ending'), bool(script.get('silent')), script['voice'], script['model'], script.get('say')])
 
 
 def check(tl):
@@ -124,7 +126,7 @@ def check(tl):
 def show(tl):
     speech = sum(l['end'] - l['start'] for l in tl['lines']); words = sum(len(l['text'].split()) for l in tl['lines'])
     print(f"{tl['title'] or 'untitled'}: {S.clock(tl['duration'])} long, {len(tl['scenes'])} scenes, {len(tl['lines'])} lines, {words} words, "
-          f"{speech:.0f} s of speech ({'estimated' if tl['estimated'] else tl['voice'] + ', measured'}), {100 * speech / tl['duration']:.0f} percent spoken")
+          f"{speech:.0f} s of speech ({'estimated' if tl['estimated'] else 'silent, paced by word counts' if tl.get('silent') else tl['voice'] + ', measured'}), {100 * speech / tl['duration']:.0f} percent spoken")
     for s in tl['scenes']:
         print(f"  {s['id']:8s} {S.clock(s['start']):>7s}  {s['length']:6.2f} s" + (f"   chapter: {s['chapter']}" if s['chapter'] else ''))
         for l in tl['lines']:
@@ -135,7 +137,8 @@ def main():
     if len(sys.argv) < 3 or sys.argv[1] not in ('plan', 'fit', 'show'): sys.exit(__doc__)
     cmd, vd = sys.argv[1], S.video_dir(sys.argv[2])
     if cmd == 'show': show(S.read_json(vd / 'timeline.json')); return
-    tl, notes = build(vd, S.load_script(vd), cmd == 'plan')
+    script = S.load_script(vd)
+    tl, notes = build(vd, script, cmd == 'plan' or bool(script.get('silent')))
     bad = check(tl)
     if bad: S.fail('\n  '.join(bad))
     S.write_json(vd / 'timeline.json', tl)

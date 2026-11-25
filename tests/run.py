@@ -144,6 +144,8 @@ def test_timeline():
     # a long line pushes the next one, and the scene grows
     d2 = fresh(lambda s: (line(s, 'S1.bumps').update(text='word ' * 24), line(s, 'S1.rms').update(at=3.0), s['scenes'][0].update(min=5.0))); tl2, notes2 = timeline.build(d2, voiced_demo(d2), False)
     expect('timeline: a long line moves the next one and the scene grows', timeline.check(tl2) == [] and tl2['scenes'][0]['length'] > 8 and len(notes2) >= 2, notes2)
+    d5 = fresh(lambda s: s.update(ending='hold')); tl5, _ = timeline.build(d5, voiced_demo(d5), False); sc5 = tl5['scenes'][-1]
+    expect('timeline: a video that holds keeps its last title', sc5['captions'][-1]['t1'] > sc5['length'] and tl['scenes'][-1]['captions'][-1]['t1'] < tl['scenes'][-1]['length'], sc5['captions'])
     broken = copy.deepcopy(tl); broken['lines'][1]['start'] = broken['lines'][0]['end'] - 0.4
     expect('timeline: check() catches an overlap', any('before' in x for x in timeline.check(broken)), timeline.check(broken))
     for what, change in {'no beat "nowhere"': lambda s: s['scenes'][0]['captions'][1].update({'from': 'nowhere'}), 'outside its scene': lambda s: s['scenes'][0]['captions'][1].update({'to': 'rms:end+9'})}.items():
@@ -264,6 +266,70 @@ def test_commit():
     finally:
         os.rmdir(repo / 'node_modules') if os.name == 'nt' else os.unlink(repo / 'node_modules')     # the link, not what it points to
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_start():
+    name = 'zz_test_video'; made = list((ROOT / 'videos').glob(f'*_{name}'))
+    for m in made: shutil.rmtree(m)
+    c, out = run(*PY, 'tools/new_video.py', name, 'A test of the start', '--silent'); vd = ROOT / out.strip().splitlines()[-1] if c == 0 else None
+    try:
+        expect('start: a new folder with every file', c == 0 and all((vd / f).exists() for f in ('brief.md', 'facts.json', 'script.json', 'clip.js', 'export.py', 'review.md', 'sources/README.md')), out)
+        left = [f.name for f in vd.rglob('*') if f.is_file() and f.suffix in ('.md', '.json', '.js', '.py') and ('TITLE_HERE' in f.read_text(encoding='utf-8') or 'DATE_HERE' in f.read_text(encoding='utf-8'))]
+        expect('start: no placeholder is left', left == [], left)
+        c, out = run(*PY, 'tools/new_video.py', name, 'Again'); expect('start: refuses a name that exists', c != 0, out)
+        c, out = run(*PY, 'tools/check_script.py', vd); expect('start: the template script passes its check', c == 0, out)
+        c, out = run(*PY, 'tools/check_facts.py', vd); expect('start: the template facts pass their check', c == 0, out)
+        c, out = run(*PY, 'tools/timeline.py', 'plan', vd); expect('start: the template has a timeline', c == 0, out)
+        c, out = run(*PY, vd / 'export.py'); expect('start: the template export runs', c == 0, out)
+        c, out = run('node', 'tools/check_text.mjs', f'videos/{vd.name}'); expect('start: the template clip draws, and its screen is clean', c == 0, out)
+        c, out = run(*PY, 'tools/packet.py', vd); expect('packet: written, with the length and the cost', c == 0 and 'nothing is spent' in (vd / 'script_packet.md').read_text(encoding='utf-8'), out)
+        c, out = run(*PY, 'tools/narrate.py', 'gen', vd); expect('silent: no voice can be made for it', c != 0 and 'silent' in out, out)
+        c, out = run('node', 'tools/render.mjs', f'videos/{vd.name}', '--draft'); shutil.copy(vd / 'out' / f'{vd.name}_draft.mp4', vd / 'out' / f'{vd.name}.mp4')
+        c, out = run(*PY, 'tools/deliver.py', vd); expect('silent: delivered without a sound track', c == 0 and (vd / 'out' / 'deliver' / f'{vd.name}.mp4').exists(), out)
+        # a computed fact that was never computed
+        f = S.read_json(vd / 'facts.json'); f['facts'].append({'id': 'F9', 'claim': 'a computed one', 'value': 3, 'shown': '3', 'kind': 'computed', 'how': 'export.py, nowhere'}); S.write_json(vd / 'facts.json', f)
+        e = check_facts.check(vd)[0]; expect('facts: catches a computed number that was never computed', any('F9 says export.py computes it' in x for x in e), e)
+        c, out = run(*PY, vd / 'export.py'); expect('export: stops when a computed fact is not asserted', c != 0 and 'F9' in out, out)
+    finally:
+        if vd: shutil.rmtree(vd, ignore_errors=True)
+
+
+def test_docs():
+    """the engine guide names every module and everything a module exports, and the skills are complete"""
+    import re as _re
+    guide = (ROOT / 'docs' / 'engine.md').read_text(encoding='utf-8'); missing = []
+    for js in sorted((ROOT / 'engine').rglob('*.js')):
+        rel = js.relative_to(ROOT / 'engine').as_posix()
+        if rel == 'app.js': continue
+        if rel not in guide: missing.append(rel); continue
+        for n in _re.findall(r'^export (?:async )?(?:function|class|const) (\w+)', js.read_text(encoding='utf-8'), _re.M):
+            if not _re.search(rf'\b{n}\b', guide): missing.append(f'{rel}: {n}')
+    expect('docs: the engine guide names every module and export', missing == [], missing)
+    scenes = {f.stem for f in (ROOT / 'gallery').glob('*.js') if not f.name.startswith('_')}; unseen = [s for s in scenes if f'gallery/{s}' not in guide and f'`{s}`' not in guide]
+    expect('docs: the engine guide points to every gallery scene', unseen == [], unseen)
+    want = ['new-video', 'video-facts', 'video-script', 'video-build', 'video-review', 'video-finish', 'video-deliver']; bad = []
+    for w in want:
+        p = ROOT / '.claude' / 'skills' / w / 'SKILL.md'
+        if not p.exists(): bad.append(w); continue
+        t = p.read_text(encoding='utf-8'); m = _re.match(r'---\nname: (.+)\ndescription: (.+)\n', t)
+        if not m or m.group(1) != w or len(m.group(2)) > 1000: bad.append(f'{w}: front matter')
+        if len(t.splitlines()) > 110: bad.append(f'{w}: {len(t.splitlines())} lines')
+    for a in ('clarity-reviewer', 'fact-checker'):
+        p = ROOT / '.claude' / 'agents' / f'{a}.md'
+        if not p.exists() or not p.read_text(encoding='utf-8').startswith(f'---\nname: {a}\n'): bad.append(a)
+    expect('docs: seven skills and two agents, each with its front matter and short enough', bad == [], bad)
+    gone = []
+    for md in [ROOT / 'CLAUDE.md', ROOT / 'README.md', *(ROOT / 'docs').glob('*.md'), *(ROOT / '.claude').rglob('*.md')]:
+        if md.name == 'studio_plan.md': continue
+        for ref in set(_re.findall(r'`((?:tools|docs|engine|gallery|templates|tests)/[\w./-]+\.(?:py|mjs|md|js|json|ps1))`', md.read_text(encoding='utf-8'))):
+            if not (ROOT / ref).exists(): gone.append(f'{md.name}: {ref}')
+        for ref in set(_re.findall(r'(?:python|node) (tools/[\w./-]+\.(?:py|mjs))', md.read_text(encoding='utf-8'))):
+            if not (ROOT / ref).exists(): gone.append(f'{md.name}: {ref}')
+    expect('docs: every file the guides and skills name exists', gone == [], gone)
+    dash = [f'{md.name}:{i}' for md in [ROOT / 'CLAUDE.md', ROOT / 'README.md', *(ROOT / 'docs').glob('*.md'), *(ROOT / '.claude').rglob('*.md'), *(ROOT / 'templates').rglob('*.md')]
+            for i, l in enumerate(md.read_text(encoding='utf-8').splitlines(), 1) if '—' in l or (';' in l and '`' not in l)]
+    expect('docs: no em dash and no semicolon in the guides', dash == [], dash)
+    n = len((ROOT / 'CLAUDE.md').read_text(encoding='utf-8').splitlines()); expect('docs: CLAUDE.md is at most 120 lines', n <= 120, n)
 
 
 def main():

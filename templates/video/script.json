@@ -1,0 +1,22 @@
+{
+ "title": "TITLE_HERE",
+ "voice": "george",
+ "ending": "hold",
+ "poster": "S1.first",
+ "terms": [],
+ "scenes": [
+  {
+   "id": "S1",
+   "chapter": "The first chapter",
+   "picture": "A ball on a dark field, drifting to the right.",
+   "lines": [
+    { "id": "first", "cue": "the ball", "text": "Every video starts from this small scene." },
+    { "id": "second", "cue": "the ball moves", "text": "Replace it with the first picture of the <go>brief." }
+   ],
+   "captions": [
+    { "kind": "title", "text": "A title says one thing" },
+    { "kind": "sub", "text": "A subtitle explains it in one short sentence.", "from": "second" }
+   ]
+  }
+ ]
+}

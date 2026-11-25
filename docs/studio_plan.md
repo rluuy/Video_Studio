@@ -1,8 +1,8 @@
 # Video studio plan
 
 Written 2026-11-24 for Ryan, and for the Claude sessions that will build and use the studio.
-Status: approved by Ryan on 2026-11-24. Phases 0 and 1 are built, and what each one showed is under the table in section 7.
-Phases 2 to 5 have not started.
+Status: approved by Ryan on 2026-11-24. Phases 0, 1 and 2 are built, and what each one showed is under the table in
+section 7. Phases 3 to 5 have not started.
 
 ---
 
@@ -238,7 +238,7 @@ measured.
 Phases 1 and 2 use copies. `figures/animation` in the paper folder is not touched at any point.
 
 **Phase 0, done 2026-11-24.** The files that would be committed were exported to another folder and installed there with
-`npm ci`. `npm run doctor` passed and the gallery matched. Publishing to GitHub waits for Ryan (section 10, item 2).
+`npm ci`. `npm run doctor` passed and the gallery matched. Committed and published to a private GitHub repo the same day.
 
 **Phase 1, done 2026-11-24.** 18 modules were extracted by a script that stops if any text it expects to change is not
 there. Five core files (theme, core, glow, light, floor) were split out by hand. The five old clips were drawn with the
@@ -260,6 +260,33 @@ Changes from the plan:
 - MathJax is installed when the pilot needs its first equation.
 - Found while comparing: in the finished clip P, the atom that the ion beam knocks off drifts over the word "off" at about
   241 to 242 s. Clip P was left as it is.
+
+**Phase 2, done 2026-11-24.** `npm test` runs 96 tests on a small video in `tests/demo`, and no test spends a credit. Each
+check passes on that video and catches faults planted in it. What was tried on real material:
+
+- **Timing.** Clip P's script as it was before the 16 hand edits, with its 58 cached voice files, fits with no overlap and
+  no hand edits. 12 lines moved by themselves, at most 2.3 s, three scenes grew by 0.4 to 1.1 s, and the clip by 2.1 s. In
+  the mixed sound, all 57 gaps between lines are silent and the shortest is 0.35 s.
+- **Marks inside a line.** 34 of 35 sentence starts inside clip P's lines land on a real pause of the voice.
+- **Text check.** On clip P it finds 19 things, among them the atom over the word "off", which is a shape crossing text.
+  On clip M it finds none. It reads a moment in 17 ms.
+- **Frame scan.** On clip P it finds 26 still stretches, 99 s in all. The lab's scan found 17 and 73 s, because encoder
+  keyframes split its stretches. It also finds highlights that switch in one frame, such as the station rings of the loop.
+- **Render by commit.** In a throwaway repo, a committed video renders and is recognized. An edited file, and a data file
+  that git ignores, both stop the render. The zip kit renders in a folder without git and its video is recognized too.
+- **Deck swap.** Tried on a throwaway deck only. Position, layer, other shapes and the play trigger were kept.
+- **Not tried yet.** A real call for new speech (the code that makes it is the one that made clip P's, tested against a
+  stand-in server), and the lab computer.
+
+Changes from the plan:
+
+- New: `approve.py` records the two approvals. `narrate.py gen` refuses to spend credits on words that were not approved.
+- New: `accepted.json` in a video's folder holds findings that are right as they are, each with its reason.
+- New: `check.py` runs every check at once. `timeline.js`, `facts.js` and `film.js` in the engine give a clip its moments,
+  its sourced numbers, its captions and its veil.
+- Labels drawn inside a clip are checked too, for punctuation, for size, for unexplained abbreviations, and for numbers
+  without a source.
+- The tilt diagram's labels now wait until its angles are wide enough to hold them, a flaw the text check found.
 
 **Cost.** Clip P used 1,997 credits for 7.1 minutes, about 280 per minute. The 28,000 left until 2026-12-20 cover about
 100 minutes of finished video. The pilot needs about 1,500 to 2,000 with retakes. Disk has 76 GB free, and each video
@@ -307,10 +334,7 @@ schematic surface. No measured or unpublished data is needed, so nothing has to 
 ## 10. Still open, with defaults
 
 1. **Name.** `Video_Studio`, confirmed 2026-11-24.
-2. **Creating the GitHub repo.** Through GitHub Desktop, as you asked (2026-11-24). Claude makes the folder a git repo,
-   shows you what would be committed, makes the first commit when you say so, and opens the folder in GitHub Desktop.
-   You press Publish repository with "Keep this code private" ticked. That creates the repo and connects it, and later
-   pushes work from here.
+2. **The GitHub repo.** Done 2026-11-24 through GitHub Desktop, private. Commits and pushes happen when you ask.
 3. **Pilot length and audience.** Default: 4 to 5 minutes, for a seminar audience who know optics but not this method.
 4. **Stills between the gates.** Default: none, as you chose.
 5. **CCOS in George's voice.** My notes say nobody had listened to the narrated clip P by 2026-11-20. If that is still

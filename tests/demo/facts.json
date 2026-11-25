@@ -1,0 +1,6 @@
+{
+ "facts": [
+  { "id": "F1", "claim": "The demo surface has an RMS height of 40 nm", "value": 40, "unit": "nm", "shown": "40 nm", "spoken": ["forty nanometers"], "kind": "schematic", "how": "the surface is drawn from a seed and scaled to this height in clip.js" },
+  { "id": "F2", "claim": "Tilting a mirror by an angle turns the reflected light by twice that angle", "value": 2, "shown": "2θ", "spoken": ["twice that angle"], "kind": "source", "source": "law of reflection, any optics textbook", "where": "reflection at a plane mirror", "quote": "the angle of reflection equals the angle of incidence", "checked": "2026-11-24" }
+ ]
+}

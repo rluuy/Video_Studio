@@ -1,0 +1,42 @@
+{
+ "title": "Demo for the tests",
+ "poster": "S2.twice",
+ "terms": [
+  { "term": "RMS", "line": "S1.rms" }
+ ],
+ "scenes": [
+  {
+   "id": "S1",
+   "chapter": "A surface",
+   "lines": [
+    { "id": "bumps", "cue": "the slab, its heights growing", "text": "This surface has hills and valleys." },
+    { "id": "rms", "cue": "the same slab, the counter", "wait": 0.6, "text": "Their typical height, the RMS, is <N>forty nanometers.", "facts": ["F1"] }
+   ],
+   "captions": [
+    { "kind": "title", "text": "A surface with small errors" },
+    { "kind": "sub", "text": "Their typical height, the RMS, is {F1}", "from": "rms" }
+   ]
+  },
+  {
+   "id": "S2",
+   "chapter": "A tilt",
+   "lines": [
+    { "id": "turn", "cue": "the mirror turns", "at": 1.0, "text": "Turn a mirror by a small angle." },
+    { "id": "twice", "cue": "the two angles", "text": "The light turns by <T>twice that angle.", "facts": ["F2"] }
+   ],
+   "captions": [
+    { "kind": "title", "text": "A mirror that turns" }
+   ]
+  },
+  {
+   "id": "S3",
+   "cut": "dip",
+   "lines": [
+    { "id": "end", "cue": "the wavy surface", "text": "So a slope on the surface sends light the wrong way." }
+   ],
+   "captions": [
+    { "kind": "title", "text": "A slope sends light the wrong way" }
+   ]
+  }
+ ]
+}

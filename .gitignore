@@ -8,6 +8,12 @@ __pycache__/
 out/
 videos/*/out/
 
+# what the tests make
+tests/*/out/
+tests/*/voice/
+tests/*/timeline.json
+tests/*/approvals.json
+
 # sources are other people's work, so only the notes about them are kept
 videos/*/sources/*
 !videos/*/sources/README.md

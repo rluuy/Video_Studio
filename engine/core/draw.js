@@ -15,7 +15,7 @@ export function text(g, x, y, s, { size = 24, fill = C.text, anchor = 'start', w
   e.innerHTML = s; return e;
 }
 /** a math symbol or short formula in the math font, italic unless told otherwise */
-export const math = (g, x, y, s, o = {}) => text(g, x, y, s, Object.assign({ family: theme.font.math, italic: true, size: 34, fill: C.title }, o));
+export const math = (g, x, y, s, o = {}) => { const e = text(g, x, y, s, Object.assign({ family: theme.font.math, italic: true, size: 34, fill: C.title }, o)); e.setAttribute('class', 'formula'); return e; };
 
 /** an arrow head drawn at the origin, pointing along +x. Put it in place with placeHead */
 export function arrowHead(g, color, size = 14) {

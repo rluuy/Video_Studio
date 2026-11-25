@@ -5,9 +5,9 @@
 import fs from 'fs';
 import path from 'path';
 import { execFileSync } from 'child_process';
-import { FFMPEG, launchChrome, outDir, sceneUrl, startServer } from './harness.mjs';
+import { FFMPEG, launchChrome, outDir, sceneArg, sceneUrl, startServer } from './harness.mjs';
 
-const [scene, ...times] = process.argv.slice(2);
+const [typed, ...times] = process.argv.slice(2), scene = sceneArg(typed);
 if (!scene || !times.length) { console.error('usage: node tools/stills.mjs gallery/<name>|videos/<folder> <time> [<time> ...]'); process.exit(2); }
 const dir = outDir(scene, 'stills'), id = scene.split('/')[1];
 const { srv, port } = await startServer();

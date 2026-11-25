@@ -27,6 +27,7 @@ const MOUNTS = [
   ['/engine/', path.join(ROOT, 'engine')],
   ['/gallery/', path.join(ROOT, 'gallery')],
   ['/videos/', path.join(ROOT, 'videos')],
+  ['/tests/', path.join(ROOT, 'tests')],
   ['/', path.join(ROOT, 'engine')],
 ];
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
@@ -80,14 +81,14 @@ export async function launchChrome({ gpu = true, width = 1920, height = 1080, sc
     const m = JSON.parse(ev.data);
     if (m.id && pending.has(m.id)) { const { res, rej } = pending.get(m.id); pending.delete(m.id); m.error ? rej(new Error(JSON.stringify(m.error))) : res(m.result); }
     else if (m.method === 'Runtime.consoleAPICalled') logs.push(m.params.args.map(a => a.value ?? a.description).join(' '));
-    else if (m.method === 'Runtime.exceptionThrown') logs.push('EXCEPTION ' + JSON.stringify(m.params.exceptionDetails).slice(0, 2000));
+    else if (m.method === 'Runtime.exceptionThrown') logs.push('EXCEPTION ' + (m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text || '').slice(0, 1500));
   };
   const send = (method, params = {}) => new Promise((res, rej) => { const i = ++id; pending.set(i, { res, rej }); ws.send(JSON.stringify({ id: i, method, params })); });
   await send('Runtime.enable'); await send('Page.enable');
   await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: false });
   const evaluate = async (expr, awaitPromise = true) => {
     const r = await send('Runtime.evaluate', { expression: expr, awaitPromise, returnByValue: true });
-    if (r.exceptionDetails) throw new Error('page error: ' + JSON.stringify(r.exceptionDetails).slice(0, 3000));
+    if (r.exceptionDetails) throw new Error('page error: ' + (r.exceptionDetails.exception?.description || r.exceptionDetails.text || JSON.stringify(r.exceptionDetails)).slice(0, 1500));
     return r.result.value;
   };
   // lossless PNG by default. JPEG at quality 100 is faster when the shaders dither every pixel of a 4K frame
@@ -110,21 +111,24 @@ export async function launchChrome({ gpu = true, width = 1920, height = 1080, sc
   return { send, evaluate, shot, goto, close, logs };
 }
 
+/** a scene as typed, with Windows separators and a trailing slash allowed */
+export const sceneArg = s => (s || '').split(path.sep).join('/').replace(/^[.]\//, '').replace(/\/+$/, '');
+
 /** the page URL of a scene such as gallery/slab or videos/2026-12_interferometry */
 export const sceneUrl = (port, scene) => `http://127.0.0.1:${port}/index.html?scene=${encodeURIComponent(scene)}`;
 
-/** where a scene's output goes: videos/<name>/out, or out/gallery */
+/** where a scene's output goes: videos/<name>/out, tests/<name>/out, or out/gallery */
 export function outDir(scene, sub = '') {
   const [kind, id] = scene.split('/');
-  const d = kind === 'videos' ? path.join(ROOT, 'videos', id, 'out', sub) : path.join(ROOT, 'out', 'gallery', sub);
+  const d = kind === 'gallery' ? path.join(ROOT, 'out', 'gallery', sub) : path.join(ROOT, kind, id, 'out', sub);
   fs.mkdirSync(d, { recursive: true });
   return d;
 }
 
-export function ffmpegWriter(outPath, { fps = 60, crf = 16, width = 1920, height = 1080, metadata = {} } = {}) {
+export function ffmpegWriter(outPath, { fps = 60, crf = 16, width = 1920, height = 1080, metadata = {}, preset = 'slow', keyframes = [] } = {}) {
   const args = ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(fps), '-c:v', process.env.CAPTURE === 'jpeg' ? 'mjpeg' : 'png', '-i', '-',
-    '-vf', `scale=${width}:${height}:flags=lanczos+accurate_rnd+full_chroma_int:out_color_matrix=bt709:out_range=tv,format=yuv420p`, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf),
-    '-profile:v', 'high', '-level', '4.2', '-x264-params', 'colorprim=bt709:transfer=bt709:colormatrix=bt709', '-g', String(fps * 2), '-bf', '2', '-movflags', '+faststart', '-color_primaries', 'bt709',
+    '-vf', `scale=${width}:${height}:flags=lanczos+accurate_rnd+full_chroma_int:out_color_matrix=bt709:out_range=tv,format=yuv420p`, '-c:v', 'libx264', '-preset', preset, '-crf', String(crf),
+    '-profile:v', 'high', '-level', '4.2', '-x264-params', 'colorprim=bt709:transfer=bt709:colormatrix=bt709', '-g', String(fps * 2), '-bf', '2', ...(keyframes.length ? ['-force_key_frames', keyframes.map(t => Math.max(0, t - 0.25 / fps).toFixed(4)).join(',')] : []), '-movflags', '+faststart', '-color_primaries', 'bt709',
     '-color_trc', 'bt709', '-colorspace', 'bt709', ...Object.entries(metadata).flatMap(([k, v]) => ['-metadata', `${k}=${v}`]), outPath];
   const p = spawn(FFMPEG, args, { stdio: ['pipe', 'inherit', 'inherit'] });
   const write = buf => new Promise(r => { if (!p.stdin.write(buf)) p.stdin.once('drain', r); else r(); });

@@ -73,7 +73,8 @@ export function tiltDiagram(parent, { tilt = 9, beats = {} } = {}) {
       ghost.setAttribute('x1', f1(HX)); ghost.setAttribute('y1', f1(HY)); ghost.setAttribute('x2', f1(HX + 420 * r0x)); ghost.setAttribute('y2', f1(HY + 420 * r0y));
       op(ghost, one * seg(tau, t0, t0 + 0.4, smooth));
       // arcs: theta between the two normals, 2 theta between the two reflected rays
-      const ao = seg(tau, t0 + 0.6, t0 + 1.2, smooth) * one;
+      // the labels wait until the angles are wide enough to hold them
+      const ao = seg(tau, t0 + 0.6, t0 + 1.2, smooth) * one, lo = seg(tau, t0 + 1.9, t0 + 2.5, smooth) * one;
       const an0 = -Math.PI / 2, an1 = Math.atan2(ny, nx);
       arcT.setAttribute('d', arcPath(HX, HY, 150, Math.min(an0, an1), Math.max(an0, an1)));
       const ar0 = Math.atan2(r0y, r0x), ar1 = Math.atan2(ry, rx);
@@ -82,9 +83,9 @@ export function tiltDiagram(parent, { tilt = 9, beats = {} } = {}) {
       const am = (an0 + an1) / 2, a2m = (ar0 + ar1) / 2;
       labT.setAttribute('x', f1(HX + 182 * Math.cos(am) - 10)); labT.setAttribute('y', f1(HY + 182 * Math.sin(am) + 4));
       lab2T.setAttribute('x', f1(HX + 290 * Math.cos(a2m) + 4)); lab2T.setAttribute('y', f1(HY + 290 * Math.sin(a2m) + 4));
-      op(labT, ao); op(lab2T, ao);
-      labBefore.setAttribute('x', f1(HX + 430 * r0x + 14)); labBefore.setAttribute('y', f1(HY + 430 * r0y + 6)); op(labBefore, ao);
-      labAfter.setAttribute('x', f1(HX + 430 * rx + 14)); labAfter.setAttribute('y', f1(HY + 430 * ry + 6)); op(labAfter, ao);
+      op(labT, lo); op(lab2T, lo);
+      labBefore.setAttribute('x', f1(HX + 430 * r0x + 14)); labBefore.setAttribute('y', f1(HY + 430 * r0y + 6)); op(labBefore, lo);
+      labAfter.setAttribute('x', f1(HX + 430 * rx + 14)); labAfter.setAttribute('y', f1(HY + 430 * ry + 6)); op(labAfter, lo);
       // second beat
       const pts = []; for (let x = HX - L; x <= HX + L; x += 6) pts.push(`${x === HX - L ? 'M' : 'L'}${f1(x)},${f1(HY - SURF(x) * beat2)}`);
       wavy.setAttribute('d', pts.join('')); op(wavy, beat2);

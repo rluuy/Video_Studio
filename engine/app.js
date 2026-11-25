@@ -1,4 +1,4 @@
-// Entry point.  ?scene=gallery/slab  or  ?scene=videos/2026-12_interferometry
+// Entry point.  ?scene=gallery/slab  or  ?scene=videos/2026-12_interferometry  or  ?scene=tests/demo
 // The tools call window.renderFrame(t) for each frame. ?t=12.5 draws one moment and ?play=1 runs the scene live.
 //
 // A scene module exports   async function create({ renderer, base })   and returns
@@ -14,7 +14,7 @@ window.__ready = false; window.__error = null;
 async function start() {
   const name = q.get('scene') || 'gallery/theme';
   const [kind, id] = name.split('/');
-  if (!['gallery', 'videos'].includes(kind) || !id) throw new Error(`unknown scene "${name}". Use gallery/<name> or videos/<folder>`);
+  if (!['gallery', 'videos', 'tests'].includes(kind) || !id) throw new Error(`unknown scene "${name}". Use gallery/<name> or videos/<folder>`);
   applyCss();
   const fonts = theme.font;
   const wanted = [`400 29px ${fonts.sans}`, `600 46px ${fonts.sans}`, `700 20px ${fonts.sans}`, `400 23px ${fonts.mono}`, `500 23px ${fonts.mono}`,
@@ -25,8 +25,8 @@ async function start() {
   const stage = document.getElementById('stage');
   const renderer = makeRenderer(stage);
   stage.insertBefore(renderer.domElement, stage.firstChild);
-  const base = kind === 'videos' ? `/videos/${id}/` : '/gallery/';
-  const mod = await import(kind === 'videos' ? `${base}clip.js` : `/gallery/${id}.js`);
+  const base = kind === 'gallery' ? '/gallery/' : `/${kind}/${id}/`;
+  const mod = await import(kind === 'gallery' ? `/gallery/${id}.js` : `${base}clip.js`);
   const clip = await mod.create({ renderer, base });
   const draw = t => { clip.update(t); renderer.render(clip.scene, clip.camera); };
   const raf2 = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));

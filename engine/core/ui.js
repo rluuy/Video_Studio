@@ -53,7 +53,7 @@ export function colorBar({ x, y, w = 330, h = 14, lut = LUT.signed, s0 = 0, s1 =
   const dpr = window.devicePixelRatio || 1; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   const g = cv.getContext('2d');
   for (let i = 0; i < cv.width; i++) { const s = s0 + (s1 - s0) * i / (cv.width - 1); g.fillStyle = lut[Math.round(Math.max(0, Math.min(1, s)) * 255)]; g.fillRect(i, 0, 1, cv.height); }
-  const tk = el('div', { cls: 'cbar-ticks', parent: box, style: { width: w + 'px' } });
+  const tk = el('div', { cls: 'cbar-ticks', parent: box, style: { width: w + 'px' } }); tk.dataset.drawn = 'scale';
   ticks.forEach(v => {
     const f = (v - lo) / (hi - lo);
     el('span', { parent: tk, style: { left: (f * w) + 'px' }, html: v.toLocaleString('en-US') + (unit && v === ticks[ticks.length - 1] ? '&#8202;' + unit : '') });

@@ -7,7 +7,8 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "doctor": "node tools/doctor.mjs",
-    "gallery": "node tools/gallery.mjs"
+    "gallery": "node tools/gallery.mjs",
+    "test": "python -X utf8 tests/run.py"
   },
   "dependencies": {
     "@fontsource/source-code-pro": "5.1.1",
